@@ -1,0 +1,58 @@
+diff --git a/app/users.py b/app/users.py
+new file mode 100644
+index 0000000..3f2a1b9
+--- /dev/null
++++ b/app/users.py
+@@ -0,0 +1,36 @@
++"""User account helpers."""
++
++import sqlite3
++
++from app.config import DATABASE_URL
++
++
++def get_user(db, user_id):
++    """Return the user row for user_id, or None when there is no match."""
++    cursor = db.cursor()
++    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
++    row = cursor.fetchone()
++    if row is None:
++        return None
++    return row
++
++
++def find_users_by_name(db, name):
++    cursor = db.cursor()
++    cursor.execute("SELECT * FROM users WHERE name = '%s'" % name)
++    return cursor.fetchall()
++
++
++def get_user_email(db, user_id):
++    user = get_user(db, user_id)
++    return user["email"]
++
++
++def sync_user(db, user_id):
++    """Sync the user's welcome email, ignoring failures."""
++    try:
++        email = get_user_email(db, user_id)
++        print("syncing", email)
++        send_welcome_email(email)
++    except:
++        pass
+diff --git a/app/config.py b/app/config.py
+new file mode 100644
+index 0000000..8c41d72
+--- /dev/null
++++ b/app/config.py
+@@ -0,0 +1,10 @@
++"""Application configuration."""
++
++import os
++
++DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///app.db")
++
++# Payments
++STRIPE_API_KEY = "sk_live_51H7fAk3CdEfGhIjKlMnOpQrStUvWxYz0123456789"
++
++SESSION_SECRET = os.environ.get("SESSION_SECRET", "")
