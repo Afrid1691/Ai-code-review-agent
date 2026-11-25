@@ -1,5 +1,9 @@
 # AI Code Review Agent
 
+[![CI](https://github.com/Afrid1691/ai-code-review-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Afrid1691/ai-code-review-agent/actions/workflows/ci.yml)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 A team of AI agents that reviews a pull request the way a real team
 would: three specialists look at the same diff from different angles, and
 a lead reviewer merges their notes into one ranked, readable review.
@@ -74,6 +78,9 @@ python -m review_agent --pr https://github.com/owner/repo/pull/42
 # Review a local diff, save the Markdown, print JSON instead
 python -m review_agent --diff changes.diff --output review.md
 python -m review_agent --diff changes.diff --json
+
+# Only report the serious findings (the verdict follows the filtered set)
+python -m review_agent --diff changes.diff --min-severity high
 ```
 
 `OPENAI_MODEL` selects the model (defaults to `gpt-4o-mini`).
@@ -103,7 +110,9 @@ curl -X POST localhost:8000/review \
 ```
 
 `POST /review` returns the verdict, the ranked findings as JSON, and the
-rendered Markdown. `GET /health` is a plain liveness check. A Dockerfile
+rendered Markdown. An optional `min_severity` field (`critical`, `high`,
+`medium` or `low`) filters the findings before the verdict is computed.
+`GET /health` is a plain liveness check. A Dockerfile
 is included: `docker build -t ai-code-review-agent .` then
 `docker run -p 8000:8000 ai-code-review-agent`.
 
@@ -140,7 +149,8 @@ python -m pytest
 The suite runs the graph in demo mode against the sample diff and checks
 that the planted SQL injection and hardcoded secret are caught, that
 findings come back ranked by severity, and that the verdict is "request
-changes". No network, no API key.
+changes". No network, no API key. GitHub Actions runs the suite on
+Python 3.11 and 3.12 on every push and pull request.
 
 ## Project structure
 

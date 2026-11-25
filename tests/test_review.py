@@ -99,3 +99,46 @@ def test_api_review_endpoint():
 def test_api_health_endpoint():
     client = TestClient(app)
     assert client.get("/health").json() == {"status": "ok"}
+
+
+def test_min_severity_filters_findings(findings):
+    result = run_review(SAMPLE_DIFF.read_text(encoding="utf-8"), demo=True,
+                        min_severity="high")
+    kept = result["review"]["findings"]
+    assert kept, "expected at least the critical findings to survive"
+    assert all(f["severity"] in ("critical", "high") for f in kept)
+    assert len(kept) < len(findings), "filter dropped nothing"
+    assert result["review"]["verdict"] == "request changes"
+
+
+def test_min_severity_critical_only():
+    result = run_review(SAMPLE_DIFF.read_text(encoding="utf-8"), demo=True,
+                        min_severity="critical")
+    kept = result["review"]["findings"]
+    assert kept, "expected the planted critical findings to survive"
+    assert all(f["severity"] == "critical" for f in kept)
+
+
+def test_min_severity_rejects_unknown_level():
+    with pytest.raises(ValueError):
+        run_review("diff --git a/x b/x\n", demo=True, min_severity="blocker")
+
+
+def test_api_min_severity():
+    client = TestClient(app)
+    response = client.post(
+        "/review",
+        json={"diff": SAMPLE_DIFF.read_text(encoding="utf-8"),
+              "demo": True, "min_severity": "high"})
+    assert response.status_code == 200
+    kept = response.json()["review"]["findings"]
+    assert kept and all(f["severity"] in ("critical", "high") for f in kept)
+
+
+def test_api_min_severity_rejects_unknown_level():
+    client = TestClient(app)
+    response = client.post(
+        "/review",
+        json={"diff": "diff --git a/x b/x\n", "demo": True,
+              "min_severity": "blocker"})
+    assert response.status_code == 422

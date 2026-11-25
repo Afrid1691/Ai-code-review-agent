@@ -37,6 +37,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Write the Markdown review to this file")
     parser.add_argument("--json", action="store_true",
                         help="Print the review as JSON instead of Markdown")
+    parser.add_argument("--min-severity", metavar="LEVEL",
+                        choices=["critical", "high", "medium", "low"],
+                        help="Only report findings at this severity or "
+                             "above; the verdict follows the filtered set")
     return parser
 
 
@@ -55,7 +59,8 @@ def main(argv: list[str] | None = None) -> int:
         diff = Path(args.diff).read_text(encoding="utf-8")
         source_label = args.diff
 
-    result = run_review(diff, demo=args.demo, source=source_label)
+    result = run_review(diff, demo=args.demo, source=source_label,
+                        min_severity=args.min_severity)
 
     if result["demo"]:
         print("Note: running in demo mode (rule-based stand-in model, no "

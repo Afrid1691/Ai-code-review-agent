@@ -18,7 +18,7 @@ from .graph import run_review
 app = FastAPI(
     title="AI Code Review Agent",
     description="Multi-agent pull request reviews, powered by LangGraph.",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 
@@ -30,6 +30,10 @@ class ReviewRequest(BaseModel):
                     "when OPENAI_API_KEY is not set on the server.")
     source: str = Field("", description="Optional label for the change, "
                                         "e.g. the PR URL")
+    min_severity: str | None = Field(
+        None, pattern="^(critical|high|medium|low)$",
+        description="Only report findings at this severity or above. "
+                    "The verdict follows the filtered set.")
 
 
 class ReviewResponse(BaseModel):
@@ -45,5 +49,6 @@ def health() -> dict:
 
 @app.post("/review", response_model=ReviewResponse)
 def review(request: ReviewRequest) -> ReviewResponse:
-    result = run_review(request.diff, demo=request.demo, source=request.source)
+    result = run_review(request.diff, demo=request.demo, source=request.source,
+                        min_severity=request.min_severity)
     return ReviewResponse(**result)
