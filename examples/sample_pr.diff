@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..3f2a1b9
 --- /dev/null
 +++ b/app/users.py
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,41 @@
 +"""User account helpers."""
 +
 +import sqlite3
@@ -40,6 +40,11 @@ index 0000000..3f2a1b9
 +        send_welcome_email(email)
 +    except:
 +        pass
++
++
++def apply_user_filter(rows, expr):
++    """Filter rows using a caller-supplied expression."""
++    return [row for row in rows if eval(expr)]
 diff --git a/app/config.py b/app/config.py
 new file mode 100644
 index 0000000..8c41d72

@@ -2,9 +2,9 @@
 
 **Verdict: Request changes**
 
-This change needs work before it merges: 2 critical, 2 high, 3 low finding(s) across the three reviewers. The most urgent item is "Hardcoded secret committed to source code" in app/config.py. Fix the critical and high severity items, address or reply to the rest, and the change should be in good shape for another pass.
+This change needs work before it merges: 2 critical, 3 high, 3 low finding(s) across the three reviewers. The most urgent item is "Hardcoded secret committed to source code" in app/config.py. Fix the critical and high severity items, address or reply to the rest, and the change should be in good shape for another pass.
 
-**Findings:** 7 (2 critical, 2 high, 3 low)
+**Findings:** 8 (2 critical, 3 high, 3 low)
 
 ### 1. [CRITICAL] Hardcoded secret committed to source code
 *app/config.py:8 — reported by Security*
@@ -34,23 +34,31 @@ A bare `except:` catches everything, including KeyboardInterrupt and real bugs, 
 
 **Suggested fix:** Catch the specific exceptions you expect (for example ValueError or requests.RequestException), log the error, and re-raise or return an explicit failure value.
 
-### 5. [LOW] Public function 'find_users_by_name' has no docstring
+### 5. [HIGH] Dynamic code execution with eval()
+*app/users.py:41 — reported by Security*
+
+eval() and exec() run whatever string they are given as Python code, so any value that reaches them from outside the codebase becomes arbitrary code execution.
+
+**Suggested fix:** Do not evaluate caller-supplied strings. Parse the input into a fixed set of operations instead (for example a mapping of named filters), or use ast.literal_eval for plain data.
+
+### 6. [LOW] Public function 'find_users_by_name' has no docstring
 *app/users.py:18 — reported by Style & Quality*
 
 Public functions without a docstring force readers to reverse-engineer the contract from the body, which slows down every future change.
 
 **Suggested fix:** Add a one-line docstring that says what the function returns and when it returns None or raises.
 
-### 6. [LOW] Public function 'get_user_email' has no docstring
+### 7. [LOW] Public function 'get_user_email' has no docstring
 *app/users.py:24 — reported by Style & Quality*
 
 Public functions without a docstring force readers to reverse-engineer the contract from the body, which slows down every future change.
 
 **Suggested fix:** Add a one-line docstring that says what the function returns and when it returns None or raises.
 
-### 7. [LOW] Debug print left in production code
+### 8. [LOW] Debug print left in production code
 *app/users.py:33 — reported by Style & Quality*
 
 A print() call writes straight to stdout, bypassing the logging setup and making the output impossible to filter or silence in production.
 
 **Suggested fix:** Use the module logger (logger.debug/info) instead.
+

@@ -11,7 +11,8 @@ a lead reviewer merges their notes into one ranked, readable review.
 - **Bug Hunter** — logic errors, unchecked `None` returns, off-by-one
   mistakes, race conditions, swallowed errors.
 - **Security** — SQL injection, hardcoded secrets, unsafe
-  deserialization, missing auth checks.
+  deserialization, dynamic code execution (`eval`/`exec`), missing auth
+  checks.
 - **Style & Quality** — readability, naming, duplication, missing
   docstrings and tests.
 - **Lead Reviewer** — deduplicates the findings, ranks them by severity,
@@ -37,9 +38,9 @@ python -m review_agent --diff examples/sample_pr.diff --demo
 ```
 
 The sample diff is a small Python change with a few real problems
-planted in it — a string-formatted SQL query, a committed API key, a
-missing `None` check, and a bare `except:` — so you can see exactly what
-the reviewers catch. The expected output is in
+planted in it — a string-formatted SQL query, a committed API key, an
+`eval()` on caller-supplied input, a missing `None` check, and a bare
+`except:` — so you can see exactly what the reviewers catch. The expected output is in
 [examples/expected_review.md](examples/expected_review.md).
 
 Demo mode is also the automatic fallback whenever `OPENAI_API_KEY` is
@@ -120,7 +121,7 @@ is included: `docker build -t ai-code-review-agent .` then
 
 > **Verdict: Request changes**
 >
-> This change needs work before it merges: 2 critical, 2 high, 3 low
+> This change needs work before it merges: 2 critical, 3 high, 3 low
 > finding(s) across the three reviewers. The most urgent item is
 > "Hardcoded secret committed to source code" in app/config.py.
 >

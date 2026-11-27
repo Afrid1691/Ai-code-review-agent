@@ -4,8 +4,8 @@ The demo model lets the whole review pipeline run end to end with no API
 key and no network. It reads the same prompts the real model receives,
 works out which reviewer is asking, and answers by scanning the diff with
 a small set of pattern rules (string-formatted SQL, committed secrets,
-bare ``except:`` blocks, unchecked ``None`` returns, and a few style
-smells).
+dynamic code execution with ``eval``/``exec``, bare ``except:`` blocks,
+unchecked ``None`` returns, and a few style smells).
 
 The responses are plain JSON in exactly the shape the agents ask for, so
 nothing downstream can tell the difference. Output is fully deterministic:
@@ -131,6 +131,21 @@ def _scan_security(lines: list[tuple[str, int, str]]) -> list[dict[str, Any]]:
                 "shell=True passes the command through a shell, so any "
                 "interpolated value becomes a command-injection risk.",
                 "Pass the command as a list of arguments and drop shell=True.",
+            ))
+        dyn_exec = re.search(r"\b(eval|exec)\s*\(", text)
+        if dyn_exec:
+            findings.append(_finding(
+                "security",
+                "Dynamic code execution with "
+                f"{dyn_exec.group(1)}()",
+                "high", file, lineno,
+                "eval() and exec() run whatever string they are given as "
+                "Python code, so any value that reaches them from outside "
+                "the codebase becomes arbitrary code execution.",
+                "Do not evaluate caller-supplied strings. Parse the input "
+                "into a fixed set of operations instead (for example a "
+                "mapping of named filters), or use ast.literal_eval for "
+                "plain data.",
             ))
     return findings
 

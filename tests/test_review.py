@@ -47,6 +47,31 @@ def test_hardcoded_secret_is_found(findings):
     assert matches[0]["severity"] == "critical"
 
 
+def test_eval_is_flagged(findings):
+    matches = [f for f in findings if "eval" in f["title"].lower()]
+    assert matches, "planted eval() call was not reported"
+    assert matches[0]["severity"] == "high"
+    assert matches[0]["agent"] == "security"
+
+
+def test_exec_is_flagged():
+    diff = (
+        "diff --git a/app/plugins.py b/app/plugins.py\n"
+        "--- a/app/plugins.py\n"
+        "+++ b/app/plugins.py\n"
+        "@@ -0,0 +1,6 @@\n"
+        '+"""Plugin helpers."""\n'
+        "+\n"
+        "+\n"
+        "+def run_plugin(code):\n"
+        '+    """Run plugin code."""\n'
+        "+    exec(code)\n"
+    )
+    result = run_review(diff, demo=True)
+    titles = [f["title"].lower() for f in result["review"]["findings"]]
+    assert any("exec" in t for t in titles), "exec() call was not reported"
+
+
 def test_none_dereference_and_bare_except_are_found(findings):
     titles = " ".join(f["title"].lower() for f in findings)
     assert "none" in titles
